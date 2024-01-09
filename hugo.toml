@@ -1,0 +1,51 @@
+baseURL = "https://nickgregorich.com/"
+disqusShortname = ""
+enableGitInfo = true
+enableRobotsTXT = true
+hasCJKLanguage = false
+languageCode = "en"
+paginate = 5
+rssLimit = 10
+theme = "hugo-texify3"
+title = "nickgregorich.com"
+
+[author]
+name = "Nick Gregorich"
+email = "blog@nickgregorich.com"
+
+[taxonomies]
+tags = "tags"
+categories = "categories"
+
+[params]
+title="nickgregorich.com"
+description = "Nerdy thoughts, from my brain to yours"
+footnote = """
+Powered by  <a class=link href=https://gohugo.io target=_blank rel=noopener>Hugo</a> | 
+Theme is a lightly modified: <a class=link href=https://github.com/michaelneuper/hugo-texify3 target=_blank rel=noopener>TeXify3</a>
+"""
+customCSS = []
+customJS = []
+dateFormat = "02 Jan 2006"
+emphasisWithDots = false
+toc = true
+rootFontSize = "100%"
+math = true
+enableDuckDuckGoSearchBox = false
+numberedSubtitles = true
+
+  [params.commentEngine]
+  code = """"""
+
+  [params.buymeacoffee]
+  code = """"""
+
+  [params.sharingbuttons]
+  facebook = false
+  twitter = false
+  email = false
+  linkedin = false
+  reddit = false
+  whatsapp = false
+  hackernews = false
+  telegram = false
