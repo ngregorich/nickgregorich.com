@@ -2,58 +2,48 @@
 
 @import "../vars";
 
-.grid-container {
-  display: grid;
-  grid-template-columns: 3fr 1fr;
-  gap: $margin * 2;
+.flex-container {
+  display: flex;
+}
 
-  @media (max-width: $mobile-breakpoint) {
-    grid-template-columns: 1fr;
-  }
+.post-list {
+  flex: 1;
+}
 
-  .sidebar {
-    flex: 1;
+.one-post {
+  margin-bottom: $margin;
 
-    @media screen and (max-width: $mobile-breakpoint) {
-      order: 1;
-    }
+  ul {
+    border-left: var(--fg4) solid $border;
+    list-style-type: none;
+    margin-left: 0.5rem;
+    padding-left: $margin;
 
-    h3.taxonomy > a {
-      color: var(--fg);
+    li {
+      align-items: center;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      line-height: 1.6;
 
-      &:visited {
-        color: var(--fg);
-      }
-
-      &:hover {
-        color: var(--fg1);
-      }
-    }
-
-    ul {
-      list-style: none;
-      padding: 0;
-      border-color: var(--fg4);
-      display: block;
-      padding: math.div($margin, 2);
-      margin-top: math.div($margin, 2);
-      margin-bottom: math.div($margin, 2);
-      border: $border solid;
-      border-radius: $radius;
-
-      li a {
+      a {
         text-decoration: none;
-        display: block;
-        padding: 2px 12px;
-        color: var(--fg);
-        transition: color 0.3s, background-color 0.3s;
+        transition: text-decoration 0.3s ease;
 
         &:hover {
-          color: var(--fg1);
-          background-color: var(--bg_s);
-          border-radius: $radius;
+          text-decoration: underline;
         }
       }
+
+      time {
+        text-align: right;
+        padding-right: $margin;
+      }
+    }
+
+    @media screen and (min-width: $mobile-breakpoint) {
+      margin-left: 1rem;
+      padding-left: 2rem;
     }
   }
 }
