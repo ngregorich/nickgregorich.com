@@ -7,7 +7,7 @@ languageCode = "en"
 paginate = 5
 rssLimit = 10
 theme = "hugo-texify3"
-title = "nickgregorich.com"
+title = "Nick Gregorich"
 
 [author]
 name = "Nick Gregorich"
@@ -18,7 +18,7 @@ tags = "tags"
 categories = "categories"
 
 [params]
-title="nickgregorich.com"
+title="Nick Gregorich"
 description = "Nerdy thoughts, from my brain to yours"
 footnote = """
 Powered by  <a class=link href=https://gohugo.io target=_blank rel=noopener>Hugo</a> | 
