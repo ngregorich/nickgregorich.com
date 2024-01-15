@@ -22,7 +22,7 @@ title="nickgregorich.com"
 description = "Nerdy thoughts, from my brain to yours"
 footnote = """
 Powered by  <a class=link href=https://gohugo.io target=_blank rel=noopener>Hugo</a> | 
-Theme is a lightly modified: <a class=link href=https://github.com/michaelneuper/hugo-texify3 target=_blank rel=noopener>TeXify3</a>
+Theme is a <a class=link href=https://github.com/ngregorich/hugo-texify3 target=_blank rel=noopener>fork</a> of <a class=link href=https://github.com/michaelneuper/hugo-texify3 target=_blank rel=noopener>TeXify3</a>
 """
 customCSS = []
 customJS = []
