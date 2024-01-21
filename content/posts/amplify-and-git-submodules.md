@@ -6,7 +6,7 @@ categories: []
 tags: ["hugo", "aws", "amplify", "git"]
 toc: true
 math: false
-draft: true
+draft: false
 ---
 I use a tool called [Hugo](https://gohugo.io) to publish this blog
 
