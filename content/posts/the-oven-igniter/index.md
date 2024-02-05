@@ -6,7 +6,7 @@ categories: []
 tags: ["ee", "diy", "fixit"]
 toc: true
 math: false
-draft: true
+draft: false
 ---
 I have a gas oven and recently it stopped heating up. When set to 350 °F, it would sit at *100 °F* for 5, 10, 15 and more minutes. Clearly something was wrong!
 
