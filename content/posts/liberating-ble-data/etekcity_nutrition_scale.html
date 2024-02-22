@@ -1,0 +1,127 @@
+<html>
+<title>Web BLE for the Etekcity Nutrition Scale</title>
+<style>
+    /* Apply fixed-width font to all <p> elements within #output */
+    #output p {
+        font-family: monospace;
+    }
+</style>
+<body>
+<button id="scanButton">Scan for Etekcity Nutrition Scale</button>
+<br>
+<ol>
+    <li>Click the Scan for Etekcity Nutrition Scale button
+        <br>
+    <li>Select Etekcity Nutrition Scale
+        <br>
+    <li>Click Pair
+        <br>
+    <li>Look for updates below and in the JavaScript console
+</ol>
+<div id="output">
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const scanButton = document.getElementById('scanButton');
+
+        scanButton.addEventListener('click', function () {
+            navigator.bluetooth.requestDevice({
+                filters: [{name: 'Etekcity Nutrition Scale'}],
+            })
+                .then(device => {
+                    console.log('Found device:', device.name);
+                    return device.gatt.connect();
+                })
+                .then(gattServer => {
+                    return gattServer.getPrimaryService(0xfff0);
+                })
+                .then(service => {
+                    return service.getCharacteristic(0xfff1);
+                })
+                .then(characteristic => {
+                    characteristic.addEventListener('characteristicvaluechanged', handleCharacteristicValueChanged);
+                    return characteristic.startNotifications();
+                })
+                .then(() => {
+                    console.log('Notifications started');
+                })
+                .catch(error => {
+                    console.error('Bluetooth error:', error);
+                });
+        });
+
+        function handleCharacteristicValueChanged(event) {
+            const value = event.target.value;
+            const hexValue = new Uint8Array(value.buffer).reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '');
+            if (value.byteLength === 17) {
+                let scaleSign = value.getUint8(10, true);
+                let scaleValue = value.getUint16(11, true);
+                let scaleUnitHex = value.getUint8(14, true)
+                let scaleMediaHex = value.getUint8(15, true);
+                let scaleStableHex = value.getUint8(16, true);
+
+                let scaleUnit;
+                let scaleMedia;
+                let scaleFactor;
+                let scaleStable;
+
+                switch (scaleUnitHex) {
+                    case 0x00:
+                    case 0x01:
+                        scaleUnit = "oz";
+                        scaleFactor = 100;
+                        break;
+                    case 0x02:
+                        scaleUnit = "g";
+                        scaleFactor = 10;
+                        break;
+                    case 0x03:
+                        scaleUnit = "mL";
+                        scaleFactor = 10;
+                        break;
+                    case 0x04:
+                        scaleUnit = "oz fl";
+                        scaleFactor = 100;
+                        break;
+                    default:
+                        scaleUnit = "?";
+                        scaleFactor = 1;
+                        break;
+                }
+
+                switch (scaleMediaHex) {
+                    case 0x00:
+                        scaleMedia = "";
+                        break;
+                    case 0x01:
+                        scaleMedia = "water";
+                        break;
+                    case 0x02:
+                        scaleMedia = "milk";
+                        break;
+                }
+
+                if (scaleSign) {
+                    scaleValue *= -1;
+                }
+
+                scaleValue /= scaleFactor
+
+                if (scaleStableHex === 0x01) {
+                    scaleStable = 'stable: '
+                } else {
+                    scaleStable = 'unstbl: '
+                }
+
+                console.log(scaleStable + scaleValue + ' ' + scaleUnit + ' ' + scaleMedia);
+
+                const outputDiv = document.getElementById('output');
+                const newLine = document.createElement('p');
+                newLine.textContent = new Date().getTime() + ' ' + scaleStable + scaleValue + ' ' + scaleUnit + ' ' + scaleMedia;
+                outputDiv.insertBefore(newLine, outputDiv.firstChild);
+            }
+        }
+    });
+</script>
+</body>
+</html>
