@@ -77,7 +77,7 @@ In the history of this characteristic, we see 3 entries:
 3. Two values back in the lighter font at the bottom:
     1. `0xA5027F0500B90178A10001`
 
-One of these things is is not like the others, can you spot it?
+One of these things is not like the others, can you spot it?
 
 The 2 most recent values are longer (17 bytes) while 2 values back is shorter (11 bytes)
 
@@ -176,7 +176,56 @@ There is some more information that we aren’t using which may include:
 
 ## Web Bluetooth
 
-There’s a little known [Web Bluetooth](https://github.com/WebBluetoothCG/web-bluetooth) “standard” that allows web browsers to communicate via Bluetooth. Unfortunately [there isn’t support for Apple’s Safari nor Firefox](https://caniuse.com/web-bluetooth), so there doesn’t seem to be widespread usage of the library
+There’s a little known [Web Bluetooth](https://github.com/WebBluetoothCG/web-bluetooth) standard that allows web browsers to communicate via Bluetooth. Unfortunately [there isn’t support for Apple’s Safari nor Firefox](https://caniuse.com/web-bluetooth), so there doesn’t seem to be widespread usage of the library. We can still make a quick prototype using Google Chrome on macOS!
 
-We can still make a quick prototype using Google Chrome on macOS!
+One thing to note is that connecting with Web Bluetooth requires a "user gesture" like a button click to initiate. Here is an example of the error message when trying to connect to Bluetooth calling from `window.onload`:
 
+```text
+Bluetooth error: DOMException: Failed to execute 'requestDevice' on 'Bluetooth':
+Must be handling a user gesture to show a permission request.
+```
+
+This seems like a good move security wise in order to prevent a rogue webpage from connecting to BLE devices in your home, but it adds a little bit of friction. We can fix the above error by connecting after a button click:
+
+```javascript
+const scanButton = document.getElementById('scanButton');
+scanButton.addEventListener('click', function () {
+```
+
+When building a native iOS app, the user needs to agree to give the app Bluetooth permissions once and then is free to connect to devices upon launch, delivering a much nicer user experience
+
+### Web Bluetooth app step by step
+
+We can build an app to connect to the Etekcity scale in a single HTML file
+
+1. Create a new file called `etekcity_nutrition_scale.html`
+2. Add boilerplate HTML
+   1. `<html>`
+   2. `<head>`
+   3. `<title>`
+   4. `<body>`
+   5. I added a `<style>` tag in the `<head>` to use CSS for monospace font
+      1. `<style>#output p { font-family: monospace; }</style>`
+3. Add a `<div>` to the `<body>` to display the scale measurements
+      1. `<div id="output"></div>`
+4. Add a `<button>` to the `<body>` to connect to Bluetooth
+   1. `<button id="scanButton">Scan for Etekcity Nutrition Scale</button>`
+5. Add a `<script>` for the Web Bluetooth code
+6. Add a listener for when the HTML has been loaded
+   1. `document.addEventListener('DOMContentLoaded', function () {`
+7. Retrieve the button from the DOM:
+   1. `const scanButton = document.getElementById('scanButton');`
+8. Add a callback function for when the DOM button is clicked:
+   1. `scanButton.addEventListener('click', function ()`
+9. Use [navigator.bluetooth.requestDevice](https://webbluetoothcg.github.io/web-bluetooth/#dom-requestdeviceoptions-filters) to prompt the user to connect to a Bluetooth device
+   1. We can filter the devices shown in the user prompt by:
+      1. GATT service UUID (`0xfff0` for our device)
+      2. Name (`Etekcity Nutrition Scale` for our device)
+      3. Manufacturer specific data
+      4. Service data
+   2. In our case, we can filter by name
+      1. `navigator.bluetooth.requestDevice({ filters: [{name: 'Etekcity Nutrition Scale'}], })`
+10. At this point in the flow, the user will need to select the device from a pop-up menu
+11. The `requestDevice()` function returns a promise that resolves to a BluetoothDevice object
+12. The callback for the promise is defined in the `.then()` method
+13. We can make a sequence of these asynchronous operations to connect to the scale and listen for the characteristic value changing
