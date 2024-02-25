@@ -56,7 +56,7 @@
             if (value.byteLength === 17) {
                 let scaleSign = value.getUint8(10);
                 let scaleValue = value.getUint16(11, true);
-                let scaleUnitHex = value.getUint8(14)
+                let scaleUnitHex = value.getUint8(14);
                 let scaleMediaHex = value.getUint8(15);
                 let scaleStableHex = value.getUint8(16);
 
@@ -108,9 +108,9 @@
                 scaleValue /= scaleFactor
 
                 if (scaleStableHex === 0x01) {
-                    scaleStable = 'stable: '
+                    scaleStable = 'stable: ';
                 } else {
-                    scaleStable = 'unstbl: '
+                    scaleStable = 'unstbl: ';
                 }
 
                 console.log(scaleStable + scaleValue + ' ' + scaleUnit + ' ' + scaleMedia);
