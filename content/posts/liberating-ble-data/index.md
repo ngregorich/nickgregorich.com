@@ -223,9 +223,65 @@ We can build an app to connect to the Etekcity scale in a single HTML file
       2. Name (`Etekcity Nutrition Scale` for our device)
       3. Manufacturer specific data
       4. Service data
-   2. In our case, we can filter by name
-      1. `navigator.bluetooth.requestDevice({ filters: [{name: 'Etekcity Nutrition Scale'}], })`
+   2. In our case, we can filter by name and service
+      1. Note that the service we intend to access must be listed as a filter
+      2. `navigator.bluetooth.requestDevice({ filters: [{name: 'Etekcity Nutrition Scale'}, {services: [0xfff0]}], })`
 10. At this point in the flow, the user will need to select the device from a pop-up menu
 11. The `requestDevice()` function returns a promise that resolves to a BluetoothDevice object
 12. The callback for the promise is defined in the `.then()` method
 13. We can make a sequence of these asynchronous operations to connect to the scale and listen for the characteristic value changing
+14. We can print the name of the device we found and then connect to the generic attribute profile (GATT) server: `.then(device => { console.log('Found device:', device.name); return device.gatt.connect(); })`
+15. Once connected to the GATT server we request a service. In our case the 16-bit UUID is `0xfff0`: `.then(gattServer => { return gattServer.getPrimaryService(0xfff0); })`
+16. And from the service we request the characteristic, in our case `0xfff1`: `.then(service => { return service.getCharacteristic(0xfff1); })`
+17. Next, we set up a callback function for notifications from the characteristic:
+`.then(characteristic => { characteristic.addEventListener('characteristicvaluechanged', handleCharacteristicValueChanged); return characteristic.startNotifications(); })`
+18. We print to the console that the listener for the notifications was set up successfully: `.then(() => { console.log('Notifications started'); })`
+19. Finally, we catch any errors in the initialization sequence: `                .catch(error => { console.error('Bluetooth error:', error); });`
+20. Now we need to define the callback for when we get a notification from our characteristic of interest: `function handleCharacteristicValueChanged(event) {`
+21. We can access the value of the characteristic that notified us using: `const value = event.target.value;`
+22. We know we only want to try and decode 17 byte values: `if (value.byteLength === 17) {`
+23. We save specific bytes of the value to appropriately named variables
+    1. Sign at byte 10 `let scaleSign = value.getUint8(10);`
+    2. Value at bytes 11 and 12 (little endian): `let scaleValue = value.getUint16(11, true);`
+    3. Units at byte 14: `let scaleUnitHex = value.getUint8(14);`
+    4. Media at byte 15: `let scaleMediaHex = value.getUint8(15);`
+    5. Stable at byte 16: `let scaleStableHex = value.getUint8(16);`
+24. We add some logic to turn units and media into human-readable values
+25. We add some logic to handle the sign and a scale factor
+26. Finally, we log the newly decoded values to the console and HTML `<div>`
+    1. To avoid confusing scrolling while values are streaming in, we append the newest reading at the top of the HTML page
+    2. Each reading is prepended with an epoch timestamp in milliseconds
+    3. Each reading is also prepended with:
+       1. `stable` if the reading is indicated as stable
+       2. `unstbl` if the reading is not indicated as stable
+    4. The reading including any scaling factor is printed
+    5. The units are printed
+    6. The media is printed
+
+```javascript
+const outputDiv = document.getElementById('output');
+const newLine = document.createElement('p');
+newLine.textContent = new Date().getTime() + ' ' + scaleStable + scaleValue + ' ' + scaleUnit + ' ' + scaleMedia;
+outputDiv.insertBefore(newLine, outputDiv.firstChild);
+```
+
+Here's the HTML page (and JavaScript console):
+
+![html page](html_page.png)
+
+Here's connecting to the scale:
+
+![html connect to scale](html_connect.png)
+
+And here's streaming scale readings:
+
+![html stream data](html_stream.png)
+
+Awesome, we made an HTML *app* that connects to a BLE scale and streams the readings to the screen!
+
+As mentioned, Safari doesn't support these features. I was able to successfully use the browser [nuviu](https://www.nuviu-browser.com) on iOS to use Web Bluetooth
+
+It's nice to have that option, but between requesting someone download a relatively unknown browser and the Web Bluetooth security features making the experience a little tedious, we could try building a native app
+
+## Swift app
+
