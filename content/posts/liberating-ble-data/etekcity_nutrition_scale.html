@@ -27,8 +27,8 @@
 
         scanButton.addEventListener('click', function () {
             navigator.bluetooth.requestDevice({
-                filters: [{name: 'Etekcity Nutrition Scale'}],
-            })
+                filters: [{name: 'Etekcity Nutrition Scale'}, {services: [0xfff0]}]
+                })
                 .then(device => {
                     console.log('Found device:', device.name);
                     return device.gatt.connect();
