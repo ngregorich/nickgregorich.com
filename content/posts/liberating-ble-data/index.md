@@ -1,9 +1,9 @@
 ---
-title: “Liberating BLE data”
+title: "Liberating BLE data"
 date: 2024-02-19T09:01:08-08:00
-description: “A simple BLE reverse engineering walkthrough”
+description: "A simple BLE reverse engineering walkthrough"
 categories: []
-tags: [“bluetooth”, “BLE”, “reverse engineering”, “data”, “swift”, “walkthrough”]
+tags: ["bluetooth", "BLE", "reverse engineering", "data", "html", "javascript", "swift", "walkthrough"]
 toc: true
 math: false
 draft: true
@@ -12,17 +12,17 @@ draft: true
 
 I recently had a need for a kitchen scale with some sort of data logging feature. Ideally the scale would have WiFi and push every measurement to a REST API, but I would have settled for the ability to export a .csv file with timestamps of my measurements
 
-I couldn’t find the exact thing I was looking for, so I purchased an [Etekcity Luminary Kitchen Scale](https://etekcity.com/collections/kitchen-scales/products/eks-l221-sus-luminary-kitchen-scale). The Luminary has some pretty nice features including a 300 mAh battery charged via a USB-C port, [Bluetooth Low Energy (BLE)](https://en.wikipedia.org/wiki/Bluetooth_Low_Energy)connectivity, and the [VeSync app](https://www.vesync.com/app) for iOS and Android
+I couldn’t find the exact thing I was looking for, so I purchased an [Etekcity Luminary Kitchen Scale](https://etekcity.com/collections/kitchen-scales/products/eks-l221-sus-luminary-kitchen-scale). The Luminary has some pretty nice features including a 300 mAh battery charged via a USB-C port, [Bluetooth Low Energy (BLE)](https://en.wikipedia.org/wiki/Bluetooth_Low_Energy) connectivity, and the [VeSync app](https://www.vesync.com/app) for iOS and Android
 
 I unboxed the scale and downloaded the app, but I didn’t find a way to export the timestamped .csv file full of scale measurements that I was hoping for
 
-The BLE communication between the scale and the app should be pretty simple, maybe I can reverse engineer it and liberate its data!
+The BLE communication between the scale and the app should be pretty simple. Maybe I can reverse engineer it and liberate its data!
 
 ## LightBlue
 
-[LightBlue](https://punchthrough.com/lightblue-features/) by a company called Punch through bills itself as “The Go-To BLE Development Tool”, and I think that’s a fair assessment
+[LightBlue](https://punchthrough.com/lightblue-features/) by a company called Punch through bills itself as “The Go-To BLE Development Tool” and I think that’s a fair assessment
 
-I’m going to use the macOS version of LightBlue for this walk through, but it is also available for iOS and Android
+I’m going to use the macOS version of LightBlue for this walk through but it is also available for iOS and Android
 
 When you open LightBlue you’ll probably be prompted to give the app access to Bluetooth on your device, then you’ll see the scan screen where you can see all the BLE devices that have [advertised](https://en.wikipedia.org/wiki/Bluetooth_advertising) in the last few moments
 
@@ -36,7 +36,7 @@ Next, we tap the device name so LightBlue can *interrogate* it (sounds intense!)
 
 ![interrogating scale](interrogating_scale.png)
 
-Interrogation will reveal the device’s [services and characteristics](https://en.wikipedia.org/wiki/Bluetooth_Low_Energy). For example, we’re expecting (hoping) to reveal a service containing a characteristic that holds the same reading on the kitchen scale’s display
+Interrogation will reveal the device’s [services and characteristics](https://en.wikipedia.org/wiki/Bluetooth_Low_Energy). For example, we’re expecting (hoping) to find a service containing a characteristic that holds the same value as the kitchen scale’s display
 
 ![scale services](scale_services.png)
 
@@ -49,10 +49,10 @@ LightBlue has revealed a single service: `0xFFF0` with 2 characteristics:
 
 Both properties are as they sound:
 
-1. Write without response allows the central (Mac, iPhone) to write to the peripheral (scale), but the peripheral will not provide a response indicating that the transmission was successful or not
+1. Write without response allows the central (Mac, iPhone) to write to the peripheral (scale), but the peripheral will not provide a response indicating if the transmission was successful (or not)
 2. Notify is somewhat similar and allows the scale peripheral to notify whenever the characteristic becomes available without the central responding to acknowledge receipt of the notification
 
-I’m not sure what the write characteristic does. The scale features selectable measurement units (grams, ounces, even fluid ounces) so maybe we can write those over BLE? It might be nice to force the scale into a given unit so we can always log the same units. Luckily I have a work around, I’ll cover it later
+I’m not sure what the write characteristic does. The scale features selectable measurement units (grams, ounces, even fluid ounces) so maybe we can write those over BLE? It might be nice to force the scale to always log with the same units. Alternatively, all the units on the scale can be converted to kilograms (or pounds)
 
 The notify characteristic is the one we’re interested in. There is an implicit *read* before the *notify*, meaning we can read the scale measurement via this characteristic
 
@@ -66,11 +66,11 @@ Tap this button to have LightBlue *listen* to notifications for this characteris
 
 ![updating the characteristic](characteristic_98g.png)
 
-In our case, the characteristic seems to update each time the scale stabilizes after the measurement changes
+In our case, the characteristic seems to update each time the scale measurement changes
 
 In the history of this characteristic, we see 3 entries:
 
-1. The current value with darker font
+1. The most recent value with darker font
     1. `0xA522810B00A90187A10000D40300020001`
 2. The previous value in the lighter font in the middle:
     1. `0xA522800B00AA0187A10000D40300020001`
@@ -176,7 +176,7 @@ There is some more information that we aren’t using which may include:
 
 ## Web Bluetooth
 
-There’s a little known [Web Bluetooth](https://github.com/WebBluetoothCG/web-bluetooth) standard that allows web browsers to communicate via Bluetooth. Unfortunately [there isn’t support for Apple’s Safari nor Firefox](https://caniuse.com/web-bluetooth), so there doesn’t seem to be widespread usage of the library. We can still make a quick prototype using Google Chrome on macOS!
+There’s a little known [Web Bluetooth](https://github.com/WebBluetoothCG/web-bluetooth) standard that allows web browsers to communicate via Bluetooth. Unfortunately [there isn’t support in Apple’s Safari nor Firefox](https://caniuse.com/web-bluetooth), so there doesn’t seem to be widespread usage. We can still make a quick prototype using Google Chrome on macOS!
 
 One thing to note is that connecting with Web Bluetooth requires a "user gesture" like a button click to initiate. Here is an example of the error message when trying to connect to Bluetooth calling from `window.onload`:
 
@@ -192,7 +192,7 @@ const scanButton = document.getElementById('scanButton');
 scanButton.addEventListener('click', function () {
 ```
 
-When building a native iOS app, the user needs to agree to give the app Bluetooth permissions once and then is free to connect to devices upon launch, delivering a much nicer user experience
+When building a native iOS app, the user needs to agree to give the app Bluetooth permissions just once and then is free to connect to devices upon launch, delivering a much nicer user experience
 
 ### Web Bluetooth app step by step
 
@@ -285,3 +285,68 @@ It's nice to have that option, but between requesting someone download a relativ
 
 ## Swift app
 
+Let's build a similar app in Swift. We'll target a macOS command line interface (CLI) app to focus on BLE connectivity rather than UI design
+
+### macOS Swift CLI app step by step
+
+In [Apple Xcode](https://developer.apple.com/xcode/), we'll need to create a new macOS CLI app:
+
+![new macos cli app](macos_cli.png)
+
+I named mine `etekcity_nutrition_cli` and saved it in `~/work`:
+
+![name macos cli app](name_macos_cli.png)
+
+1. We'll need to import [CoreBluetooth](https://developer.apple.com/documentation/corebluetooth): `import CoreBluetooth`
+2. We need to define a class for our Bluetooth Controller: `class BLEController: NSObject, ObservableObject, CBCentralManagerDelegate, CBPeripheralDelegate {`
+   1. The class will inherit from [NSObject](https://developer.apple.com/documentation/objectivec/nsobject)
+   2. The class will conform to: [ObservableObject](https://developer.apple.com/documentation/Combine/ObservableObject), [CBCentralManagerDelegate](https://developer.apple.com/documentation/corebluetooth/cbcentralmanagerdelegate/), and [CBPeripheralDelegate](https://developer.apple.com/documentation/corebluetooth/cbperipheraldelegate)
+3. We define the 16-bit service UUID we are connecting to: `let scaleServiceUUID = CBUUID.init(string: "fff0")`
+4. And the 16-bit characteristic UUID we would like to receive notifications from: `let scaleCharacteristicUUID = CBUUID.init(string: "fff1")`
+5. We instantiate a [CBCentralManager](https://developer.apple.com/documentation/corebluetooth/cbcentralmanager): `var myCentral: CBCentralManager!`
+6. We instantiate a [CBPeripheral](https://developer.apple.com/documentation/corebluetooth/cbperipheral/) to interact with the scale
+7. We initialize our class and the `NSObject` superclass: `super.init()`
+8. We initialize the instance of `CBCentralManager`: `myCentral = CBCentralManager(delegate: self, queue: nil)`
+9. We use `centralManagerDidUpdateState` to when `CBManagerState` has changed states: 
+   1. If `CBManagerState` is `poweredOn`, Bluetooth is powered on and ready to use
+10. Now we can start scanning for the scale. We'll make a function to start scanning since we'll also use it if we get disconnected. We tell the central to scan for peripherals: `myCentral.scanForPeripherals(withServices: nil, options: nil)`
+11. The [centralManager(_:didDiscover:advertisementData:rssi:)](https://developer.apple.com/documentation/corebluetooth/cbcentralmanagerdelegate/1518937-centralmanager/) function gets called when the central discovers a peripheral while scanning
+12. Since we didn't provide any filters to `myCentral.scanForPeripherals`, we need to check the name of each peripheral the central finds while scanning
+13. We use *nil coalescing* to set a default value if the `peripheral.name` is `nil`: `let unwrappedBLEName = peripheral.name ?? "NoBLEName"`
+14. If we find a peripheral with a matching name of "Etekcity Nutrition Scale"
+15. We stop scanning: `central.stopScan()`
+16. We connect to the peripheral: `central.connect(scalePeripheral, options: nil)`
+17. The [centralManager(_:didConnect:)](https://developer.apple.com/documentation/corebluetooth/cbcentralmanagerdelegate/1518969-centralmanager/) function gets called when the central connects to a peripheral
+18. We can now discover services of the connected peripheral: `peripheral.discoverServices(nil)`
+19. The [peripheral(_:didDiscoverServices:)](https://developer.apple.com/documentation/corebluetooth/cbperipheraldelegate/1518744-peripheral/) function gets called when the peripheral's services have been discovered
+20. For each service discovered in the peripheral, we scan for characteristics: `peripheral.discoverCharacteristics(nil, for: service)`
+21. The [peripheral(_:didDiscoverCharacteristicsFor:error:)](https://developer.apple.com/documentation/corebluetooth/cbperipheraldelegate/1518821-peripheral/) function gets called when the service's characteristics have been discovered
+22. The service's UUID is printed
+23. The characteristic's UUID is printed
+24. The characteristic's properties (read, write without response, or notify) are printed
+25. If the characteristic has the `notify` property, we can enable notifications for this characteristic: `peripheral.setNotifyValue(true, for: characteristic)`
+26. The [centralManager(_:didDisconnectPeripheral:error:)](https://developer.apple.com/documentation/corebluetooth/cbcentralmanagerdelegate/1518791-centralmanager/) function is called if the central manager gets disconnected from a peripheral
+    1. We start scanning for the scale again
+27. The [peripheral(_:didUpdateValueFor:error:)](https://developer.apple.com/documentation/corebluetooth/cbperipheraldelegate/1518708-peripheral/) function gets called when the `notify` characteristic changes
+28. If the received value is 17 bytes, decode the relevant bytes and display the measurement received
+
+![macos cli app running](macos_cli_running.png)
+
+## Conclusion
+
+Wow, we sure covered a lot. To recap, we learned:
+
+1. How to interrogate a Bluetooth Low Energy peripheral using the app LightBlue
+2. How to decode a weight measurement from a scale peripheral's notify characteristic
+3. How to build a Web Bluetooth app in HTML and JavaScript to receive, decode, and display the scale's characteristic
+4. How to build a macOS CLI app in Swift to receive, decode, and display the scale's characteristic
+
+If I were to revisit this project I would:
+
+1. Learn about the 11 byte transmissions from the scale
+2. Fully decode the 17 byte transmissions including CRC
+3. Sniff for the write transmissions from the official app to the scale
+
+Meanwhile, I did end up building a UI in Swift UI targeting iOS and iPadOS. This app also included writing measurements to a database via a REST API
+
+![ios app](ios_app.jpg)
