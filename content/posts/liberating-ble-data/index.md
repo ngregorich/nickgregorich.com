@@ -6,31 +6,31 @@ categories: []
 tags: ["bluetooth", "BLE", "reverse engineering", "data", "html", "javascript", "swift", "walkthrough"]
 toc: true
 math: false
-draft: true
+draft: false
 ---
 ## Background
 
-I recently had a need for a kitchen scale with some sort of data logging feature. Ideally the scale would have WiFi and push every measurement to a REST API, but I would have settled for the ability to export a .csv file with timestamps of my measurements
+I recently had a need for a kitchen scale with some sort of data logging feature. Ideally the scale would have WiFi and push every measurement to a REST API, but I would have settled for the ability to export a [.csv file](https://en.wikipedia.org/wiki/Comma-separated_values) with timestamps of my measurements
 
 I couldn’t find the exact thing I was looking for, so I purchased an [Etekcity Luminary Kitchen Scale](https://etekcity.com/collections/kitchen-scales/products/eks-l221-sus-luminary-kitchen-scale). The Luminary has some pretty nice features including a 300 mAh battery charged via a USB-C port, [Bluetooth Low Energy (BLE)](https://en.wikipedia.org/wiki/Bluetooth_Low_Energy) connectivity, and the [VeSync app](https://www.vesync.com/app) for iOS and Android
 
 I unboxed the scale and downloaded the app, but I didn’t find a way to export the timestamped .csv file full of scale measurements that I was hoping for
 
-The BLE communication between the scale and the app should be pretty simple. Maybe I can reverse engineer it and liberate its data!
+The BLE communication between the scale and the app should be pretty simple. Maybe I can reverse engineer it and liberate the data!
 
 ## LightBlue
 
-[LightBlue](https://punchthrough.com/lightblue-features/) by a company called Punch through bills itself as “The Go-To BLE Development Tool” and I think that’s a fair assessment
+[LightBlue](https://punchthrough.com/lightblue-features/) by a company called Punch Through bills itself as “The Go-To BLE Development Tool” and I think that’s a fair assessment
 
-I’m going to use the macOS version of LightBlue for this walk through but it is also available for iOS and Android
+I’m going to use the macOS version of LightBlue for this walk through, but it is also available for iOS and Android
 
-When you open LightBlue you’ll probably be prompted to give the app access to Bluetooth on your device, then you’ll see the scan screen where you can see all the BLE devices that have [advertised](https://en.wikipedia.org/wiki/Bluetooth_advertising) in the last few moments
+When you open LightBlue you’ll probably be prompted to give the app access to Bluetooth, then you’ll see the scan screen where you can see all the BLE devices that have [advertised](https://en.wikipedia.org/wiki/Bluetooth_advertising) in the last few moments
 
 ![scanning for scale](scanning_for_scale.png)
 
-LightBlue will show a surprising number of devices in the list! This will include your Apple devices including Mac, iPhone, AirTag, your other [Internet of things (IoT)](https://en.wikipedia.org/wiki/Internet_of_things) devices, maybe even your neighbor’s devices
+LightBlue will show a surprising number of devices in the list! You will see your Apple devices including Mac, iPhone, AirTag, your other [Internet of things (IoT)](https://en.wikipedia.org/wiki/Internet_of_things) devices, maybe even your neighbor’s devices
 
-You’ll need to find the device you are trying to liberate in the list. This may require some sleuthing using the whether the device is on (and advertising) or off (not advertising), [received signal strength indicator (RSSI)](https://en.wikipedia.org/wiki/Received_signal_strength_indicator) to locate the device in question, or if you’re really lucky the device will advertise an obvious name like ours did: `Etekcity Nutrition Scale` (with a relatively high RSSI, so I can infer that it’s probably not my neighbor’s)
+You’ll need to find the device you are working with in the list. This may require some sleuthing: first checking whether the device is on (and advertising) or off (not advertising), using the [received signal strength indicator (RSSI)](https://en.wikipedia.org/wiki/Received_signal_strength_indicator) to physically locate the device (higher RSSI is generally nearer to you), or if you’re really lucky the device will advertise an obvious name like ours: `Etekcity Nutrition Scale` (with a relatively high RSSI, so I know it's the one sitting next to me)
 
 Next, we tap the device name so LightBlue can *interrogate* it (sounds intense!)
 
@@ -52,13 +52,13 @@ Both properties are as they sound:
 1. Write without response allows the central (Mac, iPhone) to write to the peripheral (scale), but the peripheral will not provide a response indicating if the transmission was successful (or not)
 2. Notify is somewhat similar and allows the scale peripheral to notify whenever the characteristic becomes available without the central responding to acknowledge receipt of the notification
 
-I’m not sure what the write characteristic does. The scale features selectable measurement units (grams, ounces, even fluid ounces) so maybe we can write those over BLE? It might be nice to force the scale to always log with the same units. Alternatively, all the units on the scale can be converted to kilograms (or pounds)
+I’m not sure what the write characteristic does. The scale features selectable measurement units (grams, ounces, even fluid ounces) so maybe we can write those over BLE? It might be nice to force the scale to always log with the same units. Alternatively, the units can easily be scaled (yay, puns) to kilograms or pounds
 
 The notify characteristic is the one we’re interested in. There is an implicit *read* before the *notify*, meaning we can read the scale measurement via this characteristic
 
 ## The notify characteristic
 
-If we tap the `0xfff1` *notify* characteristic in LightBlue, we’ll see a button called *Listen for notifications*
+If we tap the `0xFFF1` *notify* characteristic in LightBlue, we’ll see a button called *Listen for notifications*
 
 ![listen for notifications](notify_switch.png)
 
@@ -66,7 +66,7 @@ Tap this button to have LightBlue *listen* to notifications for this characteris
 
 ![updating the characteristic](characteristic_98g.png)
 
-In our case, the characteristic seems to update each time the scale measurement changes
+In our case, the characteristic seems to update each time the scale display changes values
 
 In the history of this characteristic, we see 3 entries:
 
@@ -138,7 +138,7 @@ We now know the measurement is at bytes 11 and 12 (little endian). There’s act
 
 If we push the *UNIT* button on the device, we can see bytes 14 and 15 change but with an interesting pattern
 
-It turns out that byte 14 is the *units* and byte 15 is what I called the *media*. This is a kitchen nutrition scale, so it has a way to designate if the measurement is water, milk, or neither / nothing
+It turns out that byte 14 is the *units* and byte 15 is what I called the *media*. This is a kitchen nutrition scale, so it has a way to designate if the measurement is water, milk, or neither
 
 There’s one more byte that’s interesting to us, byte 16 is what I called the stable byte. If this byte is set to `0x01`, the reading is stable or valid. When placing or removing items from the scale, the byte goes to 0x00, presumably indicating that the reading is not stable and shouldn’t be considered valid
 
@@ -151,7 +151,7 @@ What we know about the Etekcity Luminary scale:
 5. Sign: `byte 10`
     1. `0x00`: positive
     2. Otherwise: negative
-6. Value: `bytes 11 and 12`
+6. Value: `bytes 11 and 12` little endian
 7. Units: `byte 14`
     1. `0x00`: ounces
     2. `0x01`: ounces
@@ -176,7 +176,7 @@ There is some more information that we aren’t using which may include:
 
 ## Web Bluetooth
 
-There’s a little known [Web Bluetooth](https://github.com/WebBluetoothCG/web-bluetooth) standard that allows web browsers to communicate via Bluetooth. Unfortunately [there isn’t support in Apple’s Safari nor Firefox](https://caniuse.com/web-bluetooth), so there doesn’t seem to be widespread usage. We can still make a quick prototype using Google Chrome on macOS!
+There’s a little known [Web Bluetooth](https://github.com/WebBluetoothCG/web-bluetooth) standard that allows web browsers to communicate via Bluetooth. Unfortunately [there isn’t support in Apple’s Safari or Firefox](https://caniuse.com/web-bluetooth), so there doesn’t seem to be widespread usage. But we can still make a quick prototype using Google Chrome on macOS!
 
 One thing to note is that connecting with Web Bluetooth requires a "user gesture" like a button click to initiate. Here is an example of the error message when trying to connect to Bluetooth calling from `window.onload`:
 
@@ -192,7 +192,7 @@ const scanButton = document.getElementById('scanButton');
 scanButton.addEventListener('click', function () {
 ```
 
-When building a native iOS app, the user needs to agree to give the app Bluetooth permissions just once and then is free to connect to devices upon launch, delivering a much nicer user experience
+When building a native iOS app, the user needs to agree to give the app Bluetooth permissions just once and is then free to connect to devices upon launch, delivering a much nicer user experience
 
 ### Web Bluetooth app step by step
 
@@ -250,10 +250,10 @@ We can build an app to connect to the Etekcity scale in a single HTML file
 25. We add some logic to handle the sign and a scale factor
 26. Finally, we log the newly decoded values to the console and HTML `<div>`
     1. To avoid confusing scrolling while values are streaming in, we append the newest reading at the top of the HTML page
-    2. Each reading is prepended with an epoch timestamp in milliseconds
+    2. Each reading is prepended with a [Unix timestamp](https://en.wikipedia.org/wiki/Unix_time) in milliseconds
     3. Each reading is also prepended with:
-       1. `stable` if the reading is indicated as stable
-       2. `unstbl` if the reading is not indicated as stable
+       1. `stable` if the reading is stable
+       2. `unstbl` if the reading is not stable
     4. The reading including any scaling factor is printed
     5. The units are printed
     6. The media is printed
@@ -277,11 +277,11 @@ And here's streaming scale readings:
 
 ![html stream data](html_stream.png)
 
-Awesome, we made an HTML *app* that connects to a BLE scale and streams the readings to the screen!
+Awesome, we made an HTML *app* that connects to a BLE scale and streams the readings to the screen! You can view the HTML [here](etekcity_nutrition_scale.html) (you may need to save the link as HTML)
 
-As mentioned, Safari doesn't support these features. I was able to successfully use the browser [nuviu](https://www.nuviu-browser.com) on iOS to use Web Bluetooth
+As mentioned, Safari doesn't support these features. I was able to the iOS browser [nuviu](https://www.nuviu-browser.com) to use Web Bluetooth
 
-It's nice to have that option, but between requesting someone download a relatively unknown browser and the Web Bluetooth security features making the experience a little tedious, we could try building a native app
+It's nice to have that option, but between requesting someone download a relatively unknown browser and the security features making the experience a little tedious, we could try building a native app
 
 ## Swift app
 
@@ -304,7 +304,7 @@ I named mine `etekcity_nutrition_cli` and saved it in `~/work`:
 3. We define the 16-bit service UUID we are connecting to: `let scaleServiceUUID = CBUUID.init(string: "fff0")`
 4. And the 16-bit characteristic UUID we would like to receive notifications from: `let scaleCharacteristicUUID = CBUUID.init(string: "fff1")`
 5. We instantiate a [CBCentralManager](https://developer.apple.com/documentation/corebluetooth/cbcentralmanager): `var myCentral: CBCentralManager!`
-6. We instantiate a [CBPeripheral](https://developer.apple.com/documentation/corebluetooth/cbperipheral/) to interact with the scale
+6. We instantiate a [CBPeripheral](https://developer.apple.com/documentation/corebluetooth/cbperipheral/) to interact with the scale: `var scalePeripheral: CBPeripheral!`
 7. We initialize our class and the `NSObject` superclass: `super.init()`
 8. We initialize the instance of `CBCentralManager`: `myCentral = CBCentralManager(delegate: self, queue: nil)`
 9. We use `centralManagerDidUpdateState` to when `CBManagerState` has changed states: 
@@ -313,7 +313,7 @@ I named mine `etekcity_nutrition_cli` and saved it in `~/work`:
 11. The [centralManager(_:didDiscover:advertisementData:rssi:)](https://developer.apple.com/documentation/corebluetooth/cbcentralmanagerdelegate/1518937-centralmanager/) function gets called when the central discovers a peripheral while scanning
 12. Since we didn't provide any filters to `myCentral.scanForPeripherals`, we need to check the name of each peripheral the central finds while scanning
 13. We use *nil coalescing* to set a default value if the `peripheral.name` is `nil`: `let unwrappedBLEName = peripheral.name ?? "NoBLEName"`
-14. If we find a peripheral with a matching name of "Etekcity Nutrition Scale"
+14. If we find a peripheral with a matching name of `Etekcity Nutrition Scale`
 15. We stop scanning: `central.stopScan()`
 16. We connect to the peripheral: `central.connect(scalePeripheral, options: nil)`
 17. The [centralManager(_:didConnect:)](https://developer.apple.com/documentation/corebluetooth/cbcentralmanagerdelegate/1518969-centralmanager/) function gets called when the central connects to a peripheral
@@ -328,13 +328,15 @@ I named mine `etekcity_nutrition_cli` and saved it in `~/work`:
 26. The [centralManager(_:didDisconnectPeripheral:error:)](https://developer.apple.com/documentation/corebluetooth/cbcentralmanagerdelegate/1518791-centralmanager/) function is called if the central manager gets disconnected from a peripheral
     1. We start scanning for the scale again
 27. The [peripheral(_:didUpdateValueFor:error:)](https://developer.apple.com/documentation/corebluetooth/cbperipheraldelegate/1518708-peripheral/) function gets called when the `notify` characteristic changes
-28. If the received value is 17 bytes, decode the relevant bytes and display the measurement received
+28. If the received value is 17 bytes, decode the relevant bytes, and display the measurement received
 
 ![macos cli app running](macos_cli_running.png)
 
+Wow, we created a native macOS app to communicate via BLE! The full Xcode project can be downloaded [here](etekcity_nutrition_cli.zip)
+
 ## Conclusion
 
-Wow, we sure covered a lot. To recap, we learned:
+We sure covered a lot. To recap, we learned:
 
 1. How to interrogate a Bluetooth Low Energy peripheral using the app LightBlue
 2. How to decode a weight measurement from a scale peripheral's notify characteristic
