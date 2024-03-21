@@ -1,5 +1,5 @@
 ---
-title: "Going Downhill Fast"
+title: "Going downhill fast"
 date: 2024-03-20T17:04:40-07:00
 description: ""
 categories: []
