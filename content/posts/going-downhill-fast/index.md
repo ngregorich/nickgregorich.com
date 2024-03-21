@@ -1,6 +1,6 @@
 ---
 title: "Going Downhill Fast"
-date: 2024-03-20T17:35:40-07:00
+date: 2024-03-20T17:04:40-07:00
 description: ""
 categories: []
 tags: ["data", "analysis", "python", "pandas", "duckdb", "ev"]
