@@ -33,7 +33,7 @@ The buttons are [membrane switches](https://en.wikipedia.org/wiki/Membrane_switc
 
 As I have found, membrane buttons can wear out with usage. Unfortunately, a replacement membrane assembly is no longer available for this dishwasher
 
-Lucky for us, a membrane button is often just a normally-open switch, so if you know *where* the membrane switch shorts across, you can add a new switch in its place. Without a schematic, that’s easier said than done
+Luckily for us, a membrane button is often just a normally-open switch, so if you know *where* the membrane switch shorts across, you can add a new switch in its place. Without a schematic, that’s easier said than done
 
 
 ## The insides
