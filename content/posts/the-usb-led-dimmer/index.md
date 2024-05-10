@@ -139,7 +139,7 @@ Things of note:
 
 ### SPICE up your life
 
-It's been a while since I did a schematic but it's been even longer since I did [SPICE](https://en.wikipedia.org/wiki/SPICE) simulations
+It's been a while since I've done a schematic but it's been even longer since I've done [SPICE](https://en.wikipedia.org/wiki/SPICE) simulations
 
 **Note:** I've definitely spent more time than expected on this project, but at this point I'm in too deep to quit!
 
