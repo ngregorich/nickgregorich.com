@@ -1,3 +1,14 @@
+---
+title: "The USB LED dimmer"
+date: 2024-05-09T20:34:37-07:00
+description: "Inside a USB LED dimmer"
+categories: []
+tags: ["ee", "usb", "led", "spice", "kicad", "ltspice", "saleae"]
+toc: true
+math: false
+draft: false
+---
+
 *“Take it apart you tease!!”* said my friend Clifton after I sent him a video of a USB-A gooseneck LED with the brightness modulated by a mysterious dimmer switch
 
 Nothing motivates an engineer more than a personal challenge, so here I am writing a blog post about my experience
