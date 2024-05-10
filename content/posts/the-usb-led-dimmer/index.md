@@ -6,7 +6,7 @@ categories: []
 tags: ["ee", "usb", "led", "spice", "kicad", "ltspice", "saleae"]
 toc: true
 math: false
-draft: false
+draft: true
 ---
 
 *“Take it apart you tease!!”* said my friend Clifton after I sent him a video of a USB-A gooseneck LED with the brightness modulated by a mysterious dimmer switch
