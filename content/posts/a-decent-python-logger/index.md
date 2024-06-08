@@ -68,6 +68,29 @@ The `-o test.jpg` sets the output file name to `test.jpg`. Instead of saving to 
 
 `libcamera-still --immediate -o -`
 
+**Note:** `libcamera-still` prints a lot to `stderr`:
+
+```
+[60:22:40.351472778] [7732]  INFO Camera camera_manager.cpp:284 libcamera v0.2.0+46-075b54d5
+[60:22:40.390038630] [7736]  WARN RPiSdn sdn.cpp:39 Using legacy SDN tuning - please consider moving SDN inside rpi.denoise
+[60:22:40.392101690] [7736]  INFO RPI vc4.cpp:447 Registered camera /base/soc/i2c0mux/i2c@1/imx708@1a to Unicam device /dev/media3 and ISP device /dev/media0
+[60:22:40.392180281] [7736]  INFO RPI pipeline_base.cpp:1144 Using configuration file '/usr/share/libcamera/pipeline/rpi/vc4/rpi_apps.yaml'
+Preview window unavailable
+Mode selection for 4608:2592:12:P
+    SRGGB10_CSI2P,1536x864/0 - Score: 10600
+    SRGGB10_CSI2P,2304x1296/0 - Score: 8200
+    SRGGB10_CSI2P,4608x2592/0 - Score: 1000
+[60:22:40.393532260] [7732]  INFO Camera camera.cpp:1183 configuring streams: (0) 4608x2592-YUV420 (1) 4608x2592-SBGGR10_CSI2P
+[60:22:40.393892125] [7736]  INFO RPI vc4.cpp:611 Sensor: /base/soc/i2c0mux/i2c@1/imx708@1a - Selected sensor format: 4608x2592-SBGGR10_1X10 - Selected unicam format: 4608x2592-pBAA
+Still capture image received
+```
+
+This won't affect piping `stdout` to `base64` for encoding, but we can *mute* those messages with:
+
+`libcamera-still --immediate -o - 2>/dev/null`
+
+where `2>/dev/null` *redirects* `stderr` to `/dev/null` 
+
 ### Uploading a photo
 
 If we thought there were a lot of ways to take a photo on a Raspi, there are effectively infinite ways to store the photo to the cloud / someone else's computer
@@ -131,10 +154,62 @@ I started with the [api-cors-lambda example](https://github.com/aws-samples/aws-
 
 The preferred method is using the [`multipart/form-data`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST) POST `formenctype`. I wanted to learn about Base64 and got it working, but I will probably switch to `multipart/form-data` next time I modify the Lambda
 
-#### 
+#### Putting it all together
+
+We can take a photo and we can upload a file, so let's put it all together by chaining commands. We need to:
+
+1. Take a photo
+2. Base64 encode the photo
+3. Generate a filename including the date and time
+4. Build JSON containing the filename and Base64 image data
+5. Upload the data to an HTTP POST API
+
+Putting the above in terms of actual commands looks like:
+
+1. `libcamera-still --immediate -o -`
+   1. The same command we ended up with in the *Taking a photo* section 
+2. `libcamera-still --immediate -o - 2>/dev/null | base64 -w 0`
+   1. Pipes the binary image from `libcamera-still` into the base64 command for encoding
+   2. `base64 -w 0` disables line wrapping in the base64 output
+      1. It is set to 76 characters by default for usage in email and usenet clients 
+3. `$(date -u "%Y%m%dT%H%M%S")Z.jpg`
+   1. `date` outputs the current date and time in the format specified
+   2. `-u` specifies [UTC](https://en.wikipedia.org/wiki/Coordinated_Universal_Time) time
+   3. `"%Y%m%dT%H%M%S"` specifies a date time format like: `20240102T030405`
+   4. `$(...)` captures the output of the `date` command
+   5. `Z` specifies that the datetime string is UTC
+   6. `.jpg` is the filename extension for the JPEG images
+4. `(echo -n '{"image": "'; libcamera-still --immediate -o - 2>/dev/null | base64 -w 0; echo '", "filename": "'$(date -u +"%Y%m%dT%H%M%S")Z.jpg'"}')`
+   1. [echo](https://en.wikipedia.org/wiki/Echo_(command)) is used to assemble the JSON string
+   2. `-n` tells `echo` not to print the trailing `\n` new line
+   3. `'...'` tells bash to [interpret text within the single quotes as literal](https://www.gnu.org/software/bash/manual/html_node/Single-Quotes.html), this helps us generate strings with special characters
+   4. `{"image": "` defines the beginning of a JSON file and the key of the first object: `image` and has an opening quote for its value
+   5. We covered the `libcamera-still` portion above
+   6. `","filename":"` provides the closing double quote for the `image` value, the delimiter between the objects, and the key `filename`
+   7. We covered the `date` portion above
+   8. `(...)` [groups](https://www.gnu.org/software/bash/manual/html_node/Command-Grouping.html) the commands and concatenates `stdout` so that we can pipe the generated JSON into other commands 
+5. `(echo -n '{"image": "'; libcamera-still --immediate -o - 2>/dev/null | base64 -w 0; echo '", "filename": "'$(date -u +"%Y%m%dT%H%M%S")Z.jpg'"}') | curl -X POST -H "Content-Type: application/json" -d @- <API URL>`
+   1. 
+
+## Script development
 
 
 
-## The true MVP
+My first attempt was a [cron job](https://en.wikipedia.org/wiki/Cron), a periodic job scheduler on Unix-like systems
+
+**Pros**
+1. Well established mechanism to run periodic jobs
+   1. Like a webcam taking a photo!
+2. Baked into the OS, runs automatically at boot
+   1. Nice for crashes
+3. Actual job is short lived and independent
+   1. If the job fails, the next invocation might be fine
+
+**Cons**
+1. Not very experiment oriented
+   1. Not an interactive / real-time command
+      1. For example changing the prefix key / filename
+      2. Changing the period
+      3. Starting and stopping "experiments"
 
 
