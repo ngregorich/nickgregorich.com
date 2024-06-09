@@ -184,32 +184,146 @@ Putting the above in terms of actual commands looks like:
    2. `-n` tells `echo` not to print the trailing `\n` new line
    3. `'...'` tells bash to [interpret text within the single quotes as literal](https://www.gnu.org/software/bash/manual/html_node/Single-Quotes.html), this helps us generate strings with special characters
    4. `{"image": "` defines the beginning of a JSON file and the key of the first object: `image` and has an opening quote for its value
+      1. In the future, I might change the key `image` to `file` for additional flexibility
    5. We covered the `libcamera-still` portion above
    6. `","filename":"` provides the closing double quote for the `image` value, the delimiter between the objects, and the key `filename`
    7. We covered the `date` portion above
    8. `(...)` [groups](https://www.gnu.org/software/bash/manual/html_node/Command-Grouping.html) the commands and concatenates `stdout` so that we can pipe the generated JSON into other commands 
-5. `(echo -n '{"image": "'; libcamera-still --immediate -o - 2>/dev/null | base64 -w 0; echo '", "filename": "'$(date -u +"%Y%m%dT%H%M%S")Z.jpg'"}') | curl -X POST -H "Content-Type: application/json" -d @- <API URL>`
-   1. 
+5. `curl -X POST -H "Content-Type: application/json" -d @- https://<API URL>`
+   1. We pipe the output of the previous `echo` / `libcamera-still` command chain to `curl`
+   2. [curl](https://en.wikipedia.org/wiki/CURL) is a command line tool and library for networking protocols
+   3. `-X POST` specifies the POST method
+   4. `-H "Content-Type: application/json"` specifies the header to tell the server the body contains JSON
+   5. `-d @-` specifies that the data will come from `stdin`
+   6. `<API URL>` is the secret URL of my HTTP POST endpoint
+      1. **Note:** In the future, I would add a revokable [API key](https://en.wikipedia.org/wiki/API_key) to my API Gateway. Right now anyone can interact with the API Gateway and Lambda if they know the URL. They may not be able to determine the proper format to successfully upload images to the S3 bucket, but I might incur costs when bad actors trigger the Lambda function
+
+Finally, we can put it all together:
+
+```bash
+(echo -n '{"image": "'; libcamera-still --immediate -o - 2>/dev/null | base64 -w 0; echo '", "filename": "'$(date -u +"%Y%m%dT%H%M%S")Z.jpg'"}') | curl -X POST -H "Content-Type: application/json" -d @- https://<API URL>
+```
+
+Sweet, now let's run this command periodically
 
 ## Script development
 
-
+### cron
 
 My first attempt was a [cron job](https://en.wikipedia.org/wiki/Cron), a periodic job scheduler on Unix-like systems
 
 **Pros**
 1. Well established mechanism to run periodic jobs
-   1. Like a webcam taking a photo!
-2. Baked into the OS, runs automatically at boot
-   1. Nice for crashes
+   1. Jobs like a webcam periodically taking a photo!
+2. Baked into the OS, cron runs automatically at boot
+   1. Nice for power cycles, crashes, etc
 3. Actual job is short lived and independent
-   1. If the job fails, the next invocation might be fine
+   1. If one job fails, the next invocation might be fine
+      1. For example if the HTTP server had a hiccup
 
 **Cons**
 1. Not very experiment oriented
    1. Not an interactive / real-time command
-      1. For example changing the prefix key / filename
-      2. Changing the period
-      3. Starting and stopping "experiments"
+      1. For example, changing the prefix key / filename
+      2. Changing the interval
+      3. Starting and stopping experiments
+2. Shortest interval is 1 minute
+
+To add a cron job, run:
+
+`$ crontab -e`
+
+That will open a text editor where you can add a new entry. Running at the shortest 1 minute interval, you can add:
+
+`* * * * * <path to script>`
+
+`<path to script>` is a script that contains:
+
+```bash
+#!/bin/bash
+
+(echo -n '{"image": "'; libcamera-still --immediate -o - 2>/dev/null | base64 -w 0; echo '", "filename": "'$(date -u +"%Y%m%dT%H%M%S")Z.jpg'"}') | curl -X POST -H "Content-Type: application/json" -d @- https://<API URL>
+```
+
+Don't forget to add permission to execute the script by running:
+
+`$ chmod +x <path to script>`
+
+The above cons list of using `cron` led me to switch to Python
+
+I went through many iterations of the Python script, I'll share the initial *quick and dirty* version as well as the final, feature packed version
+
+### Quick and dirty Python
+
+The most basic Python data logging script is pretty simple:
+
+1. Import packages
+2. Make an infinite loop with `while True:`
+3. Do the thing
+4. Wait a bit before repeating #3
+   1. Let's start with 10 seconds
+
+```python
+import time
+import subprocess
+
+cmd = """(echo -n '{"image": "'; libcamera-still --immediate -o - 2>/dev/null | base64 -w 0; echo '", "filename": "dev/'$(date -u +"%Y%m%dT%H%M%S")Z.jpg'"}') | curl -X POST -H "Content-Type: application/json" -d @- https://7jc3ae81e2.execute-api.us-west-2.amazonaws.com/prod/example"""
+
+while True:
+    subprocess.run(cmd, shell=True, capture_output=False)
+    time.sleep(10)
+```
+
+Yay, it worked! There are actually files stored to the S3 bucket. I guess you'll have to take my word for it :) 
+
+#### Quick and dirty shortcomings
+
+While this isn't necessarily a great Python script, it's might not be immediately obvious about what's not so great about it
+
+##### Iteration interval and jitter
+
+Let's print the current time before running the chain command. We'll use `time.time()` which returns a [Unix timestamp](https://en.wikipedia.org/wiki/Unix_time) which makes math really easy
+
+```python
+while True:
+    print(time.time())
+    subprocess.run(cmd, shell=True, capture_output=False)
+    time.sleep(10)
+```
+
+I let this run for 13 iterations, here are the timestamps and the interval between each:
+
+```
+Unix timestamp (s)	Time since last (s)
+1717895454.52935	-
+1717895468.70172	14.17237
+1717895482.84578	14.14406
+1717895497.05868	14.2129
+1717895511.15593	14.09725
+1717895525.29745	14.14152
+1717895539.48921	14.19176
+1717895553.54794	14.05873
+1717895567.64782	14.09988
+1717895581.74018	14.09236
+1717895596.03024	14.29006
+1717895615.20553	19.17529
+1717895629.22314	14.01761
+mean	            14.55782
+stddev 	            1.45596
+```
+
+The mean interval is 14.6 seconds. That's strange, we ran `time.sleep(10)` so it should have been 10 seconds, shouldn't it?
+
+The first problem with the quick and dirty implementation is that the loop iteration time varies with how long the command chain takes
+
+The simplest solution would be to change the sleep time from 10 seconds to `sleep = 10 - (14.55782 - 10) = 5.45`. This would drive the mean closer to 10 seconds, but it wouldn't address the 1.5 second standard deviation 
+
+The technical term that comes to mind for the standard deviation in iteration time is [jitter](https://en.wikipedia.org/wiki/Jitter)
+
+We might expect `libcamera-still` and `base64` to have low jitter but the HTTP POST to have moderate jitter, with WiFi and the Internet to contend with
+
+This jitter may or may not matter in your application. Let's see if we can get rid of it
+
+##### Modularity
 
 
