@@ -8,11 +8,11 @@ toc: true
 math: false
 draft: false
 ---
-My first exposure to [DuckDB](https://duckdb.org) was doing a query on a [Parquet](https://en.wikipedia.org/wiki/Apache_Parquet) file. The performance of [predict pushdown](https://duckdb.org/2021/06/25/querying-parquet.html), where only the relevant columns are read from disk, qualified as a legitimate gamechanger at a time when I would regularly bring my MacBook Pro to its knees doing data analysis locally
+My first exposure to [DuckDB](https://duckdb.org) was doing a query on a [Parquet](https://en.wikipedia.org/wiki/Apache_Parquet) file. The performance of [predict pushdown](https://duckdb.org/2021/06/25/querying-parquet.html), where only the relevant columns are read from disk, qualified as a legitimate gamechanger for doing local data analysis
 
-More recently, I find myself reaching for DuckDB to provide a [SQL interface](https://duckdb.org/docs/data/overview) to the mentioned Parquet files, .csv files, and even [pandas dataframes](https://pandas.pydata.org/docs/user_guide/dsintro.html). The continuity of using the same language to query a remote database like [Snowflake](https://www.snowflake.com) and locally to manipulate query results for visualization is lovely, and boosts my productivity
+More recently, I find myself reaching for DuckDB to provide a [SQL interface](https://duckdb.org/docs/data/overview) to the mentioned Parquet files, .csv files, and even [pandas dataframes](https://pandas.pydata.org/docs/user_guide/dsintro.html). The continuity of using the same language to query a remote database like [Snowflake](https://www.snowflake.com) and locally to manipulate query results for visualization is a lovely productivity boost
 
-However, an IDE like [PyCharm](https://www.jetbrains.com/pycharm/) can't quite flex its muscles when querying a .csv file -- or can it?!
+However, an IDE like [PyCharm](https://www.jetbrains.com/pycharm/) can't quite flex its autocomplete muscles when querying a .csv file -- or can it?!
 
 **Note:** you can find the [Jupyter notebook used to create this tutorial on GitHub](https://github.com/ngregorich/duckdb_in_pycharm/blob/main/duckdb_in_pycharm.ipynb)
 
@@ -222,6 +222,7 @@ Now we need to configure this DuckDB database as a Data Source in PyCharm. Here'
 ![Setup steps 10 - 12](img/setup_3.png)
 
 13. Add a setting with *Name* `duckdb.read_only`
+    1. **Note:** this and the following step are **CRITICAL**
 14. Set the *Value* to `true`
 15. Click *OK*
 
@@ -255,8 +256,13 @@ from data_v -- data_v cannot be replaced with a Python variable
 """).df()
 ```
 
-Here's what it looks like in action where I've just typed `l` and now the autocomplete engine shows us `latitude` and `longitude` like I was hoping for!
+Here's what it looks like in action where I've just typed `l` and now the autocomplete engine shows us `latitude` and `longitude` like I was hoping for. Joy!
 
 ![autocomplete example](img/autocomplete.png)
 
 **Note:** as a reminder, you can find the [Jupyter notebook used to create this tutorial on GitHub](https://github.com/ngregorich/duckdb_in_pycharm/blob/main/duckdb_in_pycharm.ipynb)
+
+### Next steps
+
+If I were to dig a little deeper on this subject, I may write a Python class as a DuckDB wrapper to make things a little more object-oriented
+
