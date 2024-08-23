@@ -52,7 +52,7 @@
   }
 
   pre {
-    background-color: var(--bg_s) !important;
+    background-color: var(--bg_s_code) !important;
     border-radius: $radius;
     font-family: "Latin Modern Mono", Courier, monospace;
     position: relative;
@@ -65,7 +65,7 @@
   }
 
   code {
-    background-color: var(--bg_s_code);
+    background-color: var(--bg_s);
     border-radius: $radius;
     font-family: "Latin Modern Mono", Courier, monospace;
     padding: 0 0.2rem;
