@@ -195,6 +195,8 @@ view_exists = check_view_exists(conn, data_view_name)
 assert view_exists, "Error: view not created"
 ```
 
+9. Ensure that the Jupyter notebook is no longer connected to the DuckDB database. The easiest way to do this is to restart the Jupyter kernel
+
 #### Charming PyCharm
 
 Now we need to configure this DuckDB database as a Data Source in PyCharm. Here's the [PyCharm documentation](https://www.jetbrains.com/help/pycharm/databases.html) for the Database tool and here's a step by step for doing configuring it to target DuckDB:
