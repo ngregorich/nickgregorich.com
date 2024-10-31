@@ -1,5 +1,5 @@
 ---
-title: "Python First Class Functions"
+title: "Python first class functions"
 date: 2024-10-21T18:20:28-07:00
 description: "A practical overview of 3 ways to use first class functions"
 categories: []

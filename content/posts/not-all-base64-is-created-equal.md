@@ -1,5 +1,5 @@
 ---
-title: "Not All Base64 Is Created Equal"
+title: "Not all Base64 is created equal"
 date: 2024-10-30T17:17:22-07:00
 description: ""
 categories: []
