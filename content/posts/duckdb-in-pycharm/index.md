@@ -3,7 +3,7 @@ title: "DuckDB in PyCharm"
 date: 2024-07-05T09:36:51-07:00
 description: "Enabling database introspection for .csv files in DuckDB"
 categories: []
-tags: ["duckdb", "pycharm", "data"]
+tags: ["duckdb", "pycharm", "data", "aws", "s3"]
 toc: true
 math: false
 draft: false
