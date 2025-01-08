@@ -67,7 +67,6 @@ I'm going to write down what worked for me
        2. Run the following commands to create the file and add the custom port
    ```bash
    echo "[Socket]
-   ListenStream=
    ListenStream=2222" | sudo tee /etc/systemd/system/ssh.socket.d/listen.conf
    ```
    2. **Note:** an alternative quick and dirty solution that will be over-written when openssh-server is updated
@@ -82,7 +81,7 @@ I'm going to write down what worked for me
     2. You **cannot** use hostnames including `orb` or `<custom name>.orb`
        1. This will result in the error: `X11 forwarding request failed on channel 0` upon login and a failure to launch X applications
 17. At this point you should be able to launch GUI applications on your Orb machine
-    1. I've installed the image preview application nomacs with `apt install nomacs`
+    1. I've installed the image preview application nomacs with `sudo apt install nomacs -y`
     2. You then launch it with `nomacs`
 
 ![great success](great_success.jpg)
