@@ -1,0 +1,4 @@
+#!/usr/bin/env zsh
+#MISE description="Create new Hugo post"
+post_name=$(basename "$1")
+hugo new "content/posts/$post_name"
