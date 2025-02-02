@@ -683,7 +683,7 @@ unix_time,serial,sensor,reading
 1738476867,323C03F1,rh,76.0
 ```
 
-#### GitHub repo
+### GitHub repo
 
 Here's the obligatory [GitHub repo](https://github.com/ngregorich/tanddserver)
 
