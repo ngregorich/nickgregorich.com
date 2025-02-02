@@ -10,7 +10,7 @@ draft: false
 ---
 I feel kind of silly calling this post reverse engineering. There's no deep [Ghidra](https://ghidra-sre.org) or [IDA Pro](https://hex-rays.com/ida-pro) work here. But there is using [Wireshark](https://www.wireshark.org) to liberate the data from an off the shelf data logger, so let's just go with it :)
 
-# Background
+## Background
 
 I have a few temperature and humidity data loggers made by a Japanese company called [TandD](https://tandd.com/)
 
@@ -20,7 +20,7 @@ These cute little loggers have a display for realtime readings, on-board memory 
 
 But what if we wanted to build our own backend for these sensors? Maybe our data is sensitive. Maybe there's no internet connectivity. Or maybe we just like making things a little harder than they need to be
 
-# The sensor
+## The sensor
 
 We are using the TR72A which looks like it has been replaced with the [TandD TR72A](https://tandd.com/product/tr72a2/)
 
@@ -33,7 +33,7 @@ Details can be found in the [User Manual](https://tandd.com/manual/pdf/man-users
 
 I only used the Windows route, but I should check to see if the same features are available in the mobile app
 
-## The Windows application
+### The Windows application
 
 *TR7 for Windows* allows you to configure all kinds of settings on the device. First we need to set the *Recording Interval* on the *Start Recording* tab
 
@@ -63,7 +63,7 @@ Here we set:
     1. We'll dive in here next
 5. Use the *Get Settings* and *Send Settings* to set and confirm your settings
 
-### Data Destination
+#### Data Destination
 
 You'll need to plug a TandD device in in order to be able to click the *Data Destination* button. Be warned, this requires the most obscure of USB cables: the [USB Mini-B](https://en.wikipedia.org/wiki/USB#Connector_type_quick_reference). 
 
@@ -77,11 +77,11 @@ The first radio button selects the *T&D WebStorage Service*, aka the free cloud 
 
 Great, we can just put a web server up and collect sweet, sweet temperature and humidity samples from the TR72A
 
-# Our own HTTP server
+## Our own HTTP server
 
 This next part requires an HTTP server. I do a lot of Python, so let's use [Flask](https://en.wikipedia.org/wiki/Flask_(web_framework))
 
-## Create a Python project using `uv`
+### Create a Python project using `uv`
 
 I'm also going all in on [Astral uv](http://docs.astral.sh/uv/), so I'm going to write instructions as if you've already installed `uv`
 
@@ -104,7 +104,7 @@ I'm going to rename the default `hello.py` to `tanddserver.py`:
 mv hello.py tanddserver.py
 ```
 
-## Flask server v1
+### Flask server v1
 
 Now for the actual server. Let's edit `tanddserver.py` to be:
 
@@ -179,7 +179,7 @@ You should eventually see a ping from the sensor:
 
 So we made contact, but I don't see any signs of temperature or humidity data. All the successive data is very similar – if not identical 
 
-# Wireshark
+## Wireshark
 
 Maybe we were a little overly eager to write our own TandD server without sniffing the traffic to the Windows server with [Wireshark](https://www.wireshark.org) first
 
@@ -189,7 +189,7 @@ Maybe we were a little overly eager to write our own TandD server without sniffi
 4. Click the blue fin at the upper left to start the capture
 5. Wait for a packet
 
-## Wireshark TandD server
+### Wireshark TandD server
 
 You can open my [TandD Windows server capture](files/tandd_server.pcapng) in [pcapng format](https://wiki.wireshark.org/Development/PcapNg) with Wireshark. Add a display filter for `http` to hide the noisy TCP packets
 
@@ -218,7 +218,7 @@ Hurray, that's what we've been looking for!
 
 We've proven that the temperature (and presumably humidity) data is transmitted over clear text HTTP as an XML file as part of a POST request. We can work with this
 
-## Wireshark Flask server
+### Wireshark Flask server
 
 Now let's figure out why our Flask server doesn't receive the same data
 
@@ -232,7 +232,7 @@ Interesting things:
 2. The interval looks a lot closer to 60 seconds (save for the dropped POST)
 3. The most interesting: there is only 1 POST per interval
 
-## What's the difference?
+### What's the difference?
 
 When spelunking through the two captures, I identified 2 differences:
 
@@ -244,7 +244,7 @@ When spelunking through the two captures, I identified 2 differences:
 
 Let's revisit the Flask server
 
-# Flask server v2
+## Flask server v2
 
 Since we figured out that the server gives different responses based on the type of POST, why don't we implement that?
 
@@ -283,7 +283,7 @@ if __name__ == "__main__":
     app.run(host="0.0.0.0", port=80, debug=True)
 ```
 
-## Running Flask server v2
+### Running Flask server v2
 
 We now have a beautiful XML file logged to the terminal:
 
@@ -468,17 +468,17 @@ But what are the timestamps associated with the buffered data? There is a Unix t
 
 Excellent, the *record* timestamp is 270 seconds before the `<value>` timestamp which is about what I'd expect for a count of 10 samples
 
-# Reflecting on the TR72A
+## Reflecting on the TR72A
 
 The ability to buffer data locally and "catch up" once there is connectivity again makes the TandD sensor a pretty compelling package
 
 Of course one could implement something similar with a [Sensirion SHT40](https://sensirion.com/products/catalog/SHT40I-BD1B) temperature and humidity sensor and an [ESP32 microcontroller](https://en.wikipedia.org/wiki/ESP32) or something in the [Raspberry Pi family](https://en.wikipedia.org/wiki/Raspberry_Pi#Series_and_generations), but the now you're building a data logger instead of collecting data
 
-# Flask server v3
+## Flask server v3
 
 Let's build a Flask server that decodes the `<data>` buffer and inserts it into a [pandas](https://pandas.pydata.org) dataframe so we can save it as a csv or parquet file
 
-## Code
+### Code
 
 What we need to do:
 
@@ -683,11 +683,11 @@ unix_time,serial,sensor,reading
 1738476867,323C03F1,rh,76.0
 ```
 
-### GitHub repo
+#### GitHub repo
 
 Here's the obligatory [GitHub repo](https://github.com/ngregorich/tanddserver)
 
-# Conclusion
+## Conclusion
 
 It worked!
 
