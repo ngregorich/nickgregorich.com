@@ -22,7 +22,7 @@ But what if we wanted to build our own backend for these sensors? Maybe our data
 
 ## The sensor
 
-We are using the TR72A which looks like it has been replaced with the [TandD TR72A](https://tandd.com/product/tr72a2/)
+We are using the TR72A which looks like it has been replaced with the [TR72A2](https://tandd.com/product/tr72a2/)
 
 The TR72 can be configured in a couple ways:
 
@@ -31,7 +31,7 @@ The TR72 can be configured in a couple ways:
 
 Details can be found in the [User Manual](https://tandd.com/manual/pdf/man-users-tr7a-eng.pdf)
 
-I only used the Windows route, but I should check to see if the same features are available in the mobile app
+I have only used the Windows route, but I should check to see if the same features are available in the mobile app
 
 ### The Windows application
 
@@ -91,11 +91,14 @@ Let's create a new project:
 uv init tandlogger
 ```
 
-Let's change into the directory and add Flask as a dependency:
+Let's change into the directory and add Flask as a dependency (along with some we use later):
 
 ```bash
 cd tanddlogger
 uv add Flask
+uv add black  # used for formatting
+uv add ruff   # used for linting
+uv add pandas # used later for saving data
 ```
 
 I'm going to rename the default `hello.py` to `tanddserver.py`:
@@ -177,7 +180,7 @@ You should eventually see a ping from the sensor:
 192.168.1.200 - - [01/Feb/2025 13:33:56] "POST / HTTP/1.1" 200 -
 ```
 
-So we made contact, but I don't see any signs of temperature or humidity data. All the successive data is very similar – if not identical 
+We made contact, but I don't see any signs of temperature or humidity data. All the successive data is very similar – if not identical 
 
 ## Wireshark
 
