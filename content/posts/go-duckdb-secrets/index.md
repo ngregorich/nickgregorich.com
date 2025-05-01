@@ -1,5 +1,5 @@
 ---
-title: "Go DuckDB Secrets"
+title: "Go DuckDB secrets"
 date: 2024-11-05T17:45:19-08:00
 description: "Using AWS secrets in DuckDB in Go"
 categories: []

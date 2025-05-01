@@ -1,5 +1,5 @@
 ---
-title: "uv pip Docker Speed Up"
+title: "uv pip docker speed up"
 date: 2024-11-14T17:09:41-08:00
 description: "A real-world test of uv pip install performance"
 categories: []

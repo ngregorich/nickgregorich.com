@@ -1,5 +1,5 @@
 ---
-title: "GUI in OrbStack Machines"
+title: "GUI in OrbStack machines"
 date: 2024-12-08T13:26:51-08:00
 description: "Using GUI applications in OrbStack Ubuntu Machines"
 categories: []

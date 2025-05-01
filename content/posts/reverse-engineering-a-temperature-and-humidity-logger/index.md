@@ -1,5 +1,5 @@
 ---
-title: "Reverse Engineering A Temperature And Humidity Logger"
+title: "Reverse engineering a temperature and humidity logger"
 date: 2025-02-01T22:38:04-08:00
 description: ""
 categories: []

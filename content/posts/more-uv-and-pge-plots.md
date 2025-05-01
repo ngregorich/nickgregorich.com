@@ -1,5 +1,5 @@
 ---
-title: "More uv and PG&E Plots"
+title: "More uv and PG&E plots"
 date: 2025-01-07T08:02:15-08:00
 description: ""
 categories: []
