@@ -3,7 +3,7 @@ title: "Internet of dog toys"
 date: 2025-04-30T17:00:26-07:00
 description: ""
 categories: []
-tags: ["iot", "esp32", "esphome", "homeassistant", "homekit"]
+tags: ["iot", "esp32", "esphome", "homeassistant", "homekit", "ee"]
 toc: true
 math: false
 draft: false
