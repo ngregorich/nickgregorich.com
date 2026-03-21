@@ -73,6 +73,13 @@ I'm going to write down what worked for me
       1. `sudo sed -i 's/\b22\b/2222/g' /lib/systemd/system/ssh.socket`
 12. Reload the configuration we just added: `sudo systemctl daemon-reload`
 13. Restart the ssh server `sudo systemctl restart ssh.socket`
+   1. **Note:** tip from [Daniel Fallman, Ph.D.](http://dfallman.com/) when using Debian Trixie:
+      1. The guide assumes the Orb machine OS uses `ssh.socket`, in the case that it uses `ssh.service` use the following sequence:
+      2. Stop the standalone daemon: `sudo systemctl stop ssh.service`
+      3. Reload the systemd configuration: `sudo systemctl daemon-reload`
+      4. Now start the socket: `sudo systemctl restart ssh.socket`
+      5. I (Nick) haven't tried this, but confirmed the original instructions do work with Ubuntu 25.10 (the default Ubuntu Orb machine as of today)
+      6. Thanks for the tip, Daniel!
 14. On macOS, open XQuartz (_command + space_, then type `xquartz`)
 15. Open a new Terminal (_command + N_)
     1. You might need to run bash to see intelligible characters if you have a fancy zsh setup using Unicode and fun fonts
