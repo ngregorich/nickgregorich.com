@@ -6,7 +6,7 @@ categories: []
 tags: ["personal","ai","llm"]
 toc: false
 math: false
-draft: true
+draft: false
 ---
 When I started blogging (again), I set out to write about a post a month. As you can see, I've fallen a little bit behind. My excuse is that it's been an interesting and exciting year, both personally and in the tech world
 
