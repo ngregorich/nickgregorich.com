@@ -1,5 +1,5 @@
 ---
-title: "My First Agent™"
+title: "My first agent™"
 date: 2026-03-22T14:14:59-07:00
 description: ""
 categories: []

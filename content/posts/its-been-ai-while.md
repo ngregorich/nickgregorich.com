@@ -1,5 +1,5 @@
 ---
-title: "It's Been A(I) While"
+title: "It's been A(I) while"
 date: 2026-03-21T14:26:48-07:00
 description: ""
 categories: []
