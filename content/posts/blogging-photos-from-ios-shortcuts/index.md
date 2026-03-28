@@ -6,7 +6,7 @@ categories: []
 tags: ["hugo","ios","shortcuts"]
 toc: false
 math: false
-draft: true
+draft: false
 ---
 I've always wanted more out of iOS Shortcuts, but I often find [no-code development platforms](https://en.wikipedia.org/wiki/No-code_development_platform) to be surprisingly difficult
 
